@@ -1,4 +1,4 @@
 # CCnet_mxnet
 cascade chain net with Mxnet
 
-New mission is startinh :)
+New mission is starting :)
