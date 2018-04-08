@@ -93,6 +93,11 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
         arg_params['bbox_pred_weight'] = mx.random.normal(0, 0.001, shape=arg_shape_dict['bbox_pred_weight'])
         arg_params['bbox_pred_bias'] = mx.nd.zeros(shape=arg_shape_dict['bbox_pred_bias'])
 
+        #new params
+        if args.network == 'resnet':
+            arg_params['scale_4_1'] = mx.nd.array([1.0])
+            arg_params['scale_5_1'] = mx.nd.array([1.0])
+
     # check parameter shapes
     for k in sym.list_arguments():
         if k in data_shape_dict:
