@@ -71,12 +71,9 @@ def get_resnet_conv(data):
 
     # res4
     unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(2, 2), dim_match=False, name='stage3_unit1')
-    for i in range(2, units[2]):
+    for i in range(2, units[2] + 1):
         unit = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % i)
-
-    unit_4 = residual_unit(data=unit, num_filter=filter_list[2], stride=(1, 1), dim_match=True, name='stage3_unit%s' % units[2])
-
-    return unit, unit_4
+    return unit
 
 
 def get_resnet_train(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHORS):
@@ -88,7 +85,7 @@ def get_resnet_train(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     rpn_bbox_weight = mx.symbol.Variable(name='bbox_weight')
 
     # shared convolutional layers
-    unit_4_1, conv_feat = get_resnet_conv(data)
+    conv_feat = get_resnet_conv(data)
 
     # RPN layers
     rpn_conv = mx.symbol.Convolution(
@@ -140,20 +137,6 @@ def get_resnet_train(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     bbox_weight = group[3]
 
     # Fast R-CNN
-    
-    ##feature 4
-    #roi_pool4 = mx.symbol.ROIPooling(
-    #    name='roi_pool4', data=unit_4_1, rois=rois, pooled_size=(14, 14), spatial_scale=1.0 / config.RCNN_FEAT_STRIDE)
-
-    ## bn_roi_pool4 = mx.sym.BatchNorm(data=roi_pool4, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn_roi_pool4')
-    #relu_pool4 = mx.sym.Activation(data=roi_pool4, act_type='relu', name='relu_pool4')
-    #pool4_1 = mx.symbol.Pooling(data=relu_pool4, global_pool=True, kernel=(14, 14), pool_type='avg', name='pool4_1')
-    #pool4_1_norm = mx.symbol.L2Normalization(pool4_1, mode='instance', name = 'pool4_1_norm')
-    #scale_4_1 =mx.symbol.Variable('scale_4_1', shape=(1,)) 
-    #pool_4_1_scale = mx.symbol.broadcast_mul(lhs = pool4_1_norm, rhs = scale_4_1, name = 'pool_4_1_scale')
-    #pool_4_1_scale = pool4_1_norm*1.0
-    #feature 4 done
-
 
     #feature 5_1
     roi_pool = mx.symbol.ROIPooling(
@@ -169,7 +152,7 @@ def get_resnet_train(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     pool_5_1_scale = pool5_1_norm*1.0
     #feature 5_1 done
 
-    # res5 resize conv
+    # UNIT5_2 resize conv
     unit = residual_unit(data=roi_pool, num_filter=filter_list[3], stride=(2, 2), dim_match=False, name='stage4_unit1')
     # resize conv done
 
@@ -188,14 +171,52 @@ def get_resnet_train(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     pool_5_2_scale = pool5_2_norm*1.0
     #feature 5_2 done
 
-    for i in range(2, units[3] + 1):
-        unit = residual_unit(data=unit, num_filter=filter_list[3], stride=(1, 1), dim_match=True, name='stage4_unit%s' % i)
+    #UNIT5_3 conv
+    unit = residual_unit(data=unit, num_filter=filter_list[3], stride=(1, 1), dim_match=True, name='stage4_unit2')
+
+    #feature 5_3 
+    #make new ROI pooling here
+    roi_pool_53 = mx.symbol.ROIPooling(
+        name='roi_pool_53', data=unit, rois=rois, pooled_size=(7, 7), spatial_scale=1.0 / 32)
+
+    # bn_roi_pool4 = mx.sym.BatchNorm(data=roi_pool4, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn_roi_pool4')
+    relu_pool5_3 = mx.sym.Activation(data=roi_pool_53, act_type='relu', name='relu_pool_53')
+    pool5_3 = mx.symbol.Pooling(data=relu_pool5_3, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool5_4')
+    pool5_3_norm = mx.symbol.L2Normalization(pool5_3, mode='instance', name = 'pool5_3_norm')
+    #scale_5_1 =mx.symbol.Variable('scale_5_1', shape=(1,)) 
+    #pool_5_1_scale = mx.symbol.broadcast_mul(lhs = pool5_1_norm, rhs = scale_5_1, name = 'pool_5_1_scale')
+    pool_5_3_scale = pool5_3_norm*1.0
+    #feature 5_3 done
+
+    #UNIT5_4 conv
+    unit = residual_unit(data=unit, num_filter=filter_list[3], stride=(1, 1), dim_match=True, name='stage4_unit3')
+
+
+    #feature 5_4 
+    #make new ROI pooling here
+    roi_pool_54 = mx.symbol.ROIPooling(
+        name='roi_pool_54', data=unit, rois=rois, pooled_size=(7, 7), spatial_scale=1.0 / 32)
+
+    # bn_roi_pool4 = mx.sym.BatchNorm(data=roi_pool4, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn_roi_pool4')
+    relu_pool5_4 = mx.sym.Activation(data=roi_pool_54, act_type='relu', name='relu_pool_54')
+    pool5_4 = mx.symbol.Pooling(data=relu_pool5_4, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool5_4')
+    pool5_4_norm = mx.symbol.L2Normalization(pool5_4, mode='instance', name = 'pool5_4_norm')
+    #scale_5_1 =mx.symbol.Variable('scale_5_1', shape=(1,)) 
+    #pool_5_1_scale = mx.symbol.broadcast_mul(lhs = pool5_1_norm, rhs = scale_5_1, name = 'pool_5_1_scale')
+    pool_5_4_scale = pool5_4_norm*1.0
+    #feature 5_3 done
+
+    # #original code
+    # for i in range(2, units[3] + 1):
+    #     unit = residual_unit(data=unit, num_filter=filter_list[3], stride=(1, 1), dim_match=True, name='stage4_unit%s' % i)
+    # #original code done
+
     bn1 = mx.sym.BatchNorm(data=unit, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn1')
     relu1 = mx.sym.Activation(data=bn1, act_type='relu', name='relu1')
     pool1 = mx.symbol.Pooling(data=relu1, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool1')
     #feature 5 done
 
-    pool_concat = mx.symbol.Concat(pool_5_1_scale, pool_5_2_scale, pool1, dim = 1, name = 'pool1_concat')
+    pool_concat = mx.symbol.Concat(pool_5_1_scale, pool_5_2_scale, pool_5_3_scale, pool_5_4_scale, pool1, dim = 1, name = 'pool1_concat')
 
     # classification
     cls_score = mx.symbol.FullyConnected(name='cls_score', data=pool_concat, num_hidden=num_classes)
@@ -219,7 +240,7 @@ def get_resnet_test(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHO
     im_info = mx.symbol.Variable(name="im_info")
 
     # shared convolutional layers
-    unit_4_1, conv_feat = get_resnet_conv(data)
+    conv_feat = get_resnet_conv(data)
 
     # RPN
     rpn_conv = mx.symbol.Convolution(
@@ -251,20 +272,6 @@ def get_resnet_test(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHO
             rpn_pre_nms_top_n=config.TEST.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=config.TEST.RPN_POST_NMS_TOP_N,
             threshold=config.TEST.RPN_NMS_THRESH, rpn_min_size=config.TEST.RPN_MIN_SIZE)
 
-    ##feature 4
-    #roi_pool4 = mx.symbol.ROIPooling(
-    #    name='roi_pool4', data=unit_4_1, rois=rois, pooled_size=(14, 14), spatial_scale=1.0 / config.RCNN_FEAT_STRIDE)
-
-    ## bn_roi_pool4 = mx.sym.BatchNorm(data=roi_pool4, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn_roi_pool4')
-    #relu_pool4 = mx.sym.Activation(data=roi_pool4, act_type='relu', name='relu_pool4')
-    #pool4_1 = mx.symbol.Pooling(data=relu_pool4, global_pool=True, kernel=(14, 14), pool_type='avg', name='pool4_1')
-    #pool4_1_norm = mx.symbol.L2Normalization(pool4_1, mode='instance', name = 'pool4_1_norm')
-    #pool_4_1_scale = pool4_1_norm*1.0
-    ## make a scale
-    #scale_4_1 =mx.symbol.Variable('scale_4_1', shape=(1,)) 
-    #pool_4_1_scale = mx.symbol.broadcast_mul(lhs = pool4_1_norm, rhs = scale_4_1, name = 'pool_4_1_scale')
-    #feature 4 done
-
     # Fast R-CNN
 
     #feature 5_1
@@ -282,7 +289,7 @@ def get_resnet_test(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHO
 
     # res5
 
-    #resize conv
+    #UNIT 5_1 resize conv
     unit = residual_unit(data=roi_pool, num_filter=filter_list[3], stride=(2, 2), dim_match=False, name='stage4_unit1')
     #resize conv done
 
@@ -300,14 +307,52 @@ def get_resnet_test(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHO
     pool_5_2_scale = pool5_2_norm*1.0
     #feature 5_2 done
 
+    #UNIT5_3 conv
+    unit = residual_unit(data=unit, num_filter=filter_list[3], stride=(1, 1), dim_match=True, name='stage4_unit2')
 
-    for i in range(2, units[3] + 1):
-        unit = residual_unit(data=unit, num_filter=filter_list[3], stride=(1, 1), dim_match=True, name='stage4_unit%s' % i)
+    #feature 5_3 
+    #make new ROI pooling here
+    roi_pool_53 = mx.symbol.ROIPooling(
+        name='roi_pool_53', data=unit, rois=rois, pooled_size=(7, 7), spatial_scale=1.0 / 32)
+
+    # bn_roi_pool4 = mx.sym.BatchNorm(data=roi_pool4, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn_roi_pool4')
+    relu_pool5_3 = mx.sym.Activation(data=roi_pool_53, act_type='relu', name='relu_pool_53')
+    pool5_3 = mx.symbol.Pooling(data=relu_pool5_3, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool5_4')
+    pool5_3_norm = mx.symbol.L2Normalization(pool5_3, mode='instance', name = 'pool5_3_norm')
+    #scale_5_1 =mx.symbol.Variable('scale_5_1', shape=(1,)) 
+    #pool_5_1_scale = mx.symbol.broadcast_mul(lhs = pool5_1_norm, rhs = scale_5_1, name = 'pool_5_1_scale')
+    pool_5_3_scale = pool5_3_norm*1.0
+    #feature 5_3 done
+
+    #UNIT5_4 conv
+    unit = residual_unit(data=unit, num_filter=filter_list[3], stride=(1, 1), dim_match=True, name='stage4_unit3')
+
+
+    #feature 5_4 
+    #make new ROI pooling here
+    roi_pool_54 = mx.symbol.ROIPooling(
+        name='roi_pool_54', data=unit, rois=rois, pooled_size=(7, 7), spatial_scale=1.0 / 32)
+
+    # bn_roi_pool4 = mx.sym.BatchNorm(data=roi_pool4, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn_roi_pool4')
+    relu_pool5_4 = mx.sym.Activation(data=roi_pool_54, act_type='relu', name='relu_pool_54')
+    pool5_4 = mx.symbol.Pooling(data=relu_pool5_4, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool5_4')
+    pool5_4_norm = mx.symbol.L2Normalization(pool5_4, mode='instance', name = 'pool5_4_norm')
+    #scale_5_1 =mx.symbol.Variable('scale_5_1', shape=(1,)) 
+    #pool_5_1_scale = mx.symbol.broadcast_mul(lhs = pool5_1_norm, rhs = scale_5_1, name = 'pool_5_1_scale')
+    pool_5_4_scale = pool5_4_norm*1.0
+    #feature 5_3 done
+
+
+    ##original code
+    # for i in range(2, units[3] + 1):
+    #     unit = residual_unit(data=unit, num_filter=filter_list[3], stride=(1, 1), dim_match=True, name='stage4_unit%s' % i)
+    ##original code
+
     bn1 = mx.sym.BatchNorm(data=unit, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn1')
     relu1 = mx.sym.Activation(data=bn1, act_type='relu', name='relu1')
     pool1 = mx.symbol.Pooling(data=relu1, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool1')
 
-    pool_concat = mx.symbol.Concat(pool_5_1_scale, pool_5_2_scale, pool1, dim = 1, name = 'pool1_concat')
+    pool_concat = mx.symbol.Concat(pool_5_1_scale, pool_5_2_scale, pool_5_3_scale, pool_5_4_scale, pool1, dim = 1, name = 'pool1_concat')
 
     # classification
     cls_score = mx.symbol.FullyConnected(name='cls_score', data=pool_concat, num_hidden=num_classes)
