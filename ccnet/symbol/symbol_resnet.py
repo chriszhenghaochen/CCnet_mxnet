@@ -264,31 +264,31 @@ def get_resnet_test(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHO
 
     # bn_roi_pool4 = mx.sym.BatchNorm(data=roi_pool4, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn_roi_pool4')
     relu_pool5 = mx.sym.Activation(data=roi_pool, act_type='relu', name='relu_pool5')
-    pool5_1 = mx.symbol.Pooling(data=relu_pool5, global_pool=True, kernel=(14, 14), pool_type='avg', name='pool5_1')
-    pool5_1_norm = mx.symbol.L2Normalization(pool5_1, mode='instance', name = 'pool5_1_norm')
+    pool5_1_norm = mx.symbol.L2Normalization(relu_pool5, mode='spatial', name = 'pool5_1_norm')
+    pool5_1 = mx.symbol.Pooling(data=pool5_1_norm, global_pool=True, kernel=(14, 14), pool_type='avg', name='pool5_1')
     #scale_5_1 =mx.symbol.Variable('scale_5_1', shape=(1,)) 
     #pool_5_1_scale = mx.symbol.broadcast_mul(lhs = pool5_1_norm, rhs = scale_5_1, name = 'pool_5_1_scale')
-    pool_5_1_scale = pool5_1_norm*1.0    
+    pool_5_1_scale = pool5_1*1.0
     #feature 5_1 done
 
     # res5
 
-    #UNIT 5_1 resize conv
+   # UNIT5_2 resize conv
     unit = residual_unit(data=roi_pool, num_filter=filter_list[3], stride=(2, 2), dim_match=False, name='stage4_unit1')
-    #resize conv done
+    # resize conv done
 
-    #feature 5_2
+    # #feature 5_2
     # #make new ROI pooling here
     # roi_pool_52 = mx.symbol.ROIPooling(
     #     name='roi_pool_52', data=unit, rois=rois, pooled_size=(7, 7), spatial_scale=1.0 / 32)
 
     # bn_roi_pool4 = mx.sym.BatchNorm(data=roi_pool4, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn_roi_pool4')
     relu_pool5_2 = mx.sym.Activation(data=unit, act_type='relu', name='relu_pool_52')
-    pool5_2 = mx.symbol.Pooling(data=relu_pool5_2, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool5_2')
-    pool5_2_norm = mx.symbol.L2Normalization(pool5_2, mode='instance', name = 'pool5_2_norm')
+    pool5_2_norm = mx.symbol.L2Normalization(relu_pool5_2, mode='spatial', name = 'pool5_2_norm')
+    pool5_2 = mx.symbol.Pooling(data=pool5_2_norm, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool5_2')   
     #scale_5_1 =mx.symbol.Variable('scale_5_1', shape=(1,)) 
     #pool_5_1_scale = mx.symbol.broadcast_mul(lhs = pool5_1_norm, rhs = scale_5_1, name = 'pool_5_1_scale')
-    pool_5_2_scale = pool5_2_norm*1.0
+    pool_5_2_scale = pool5_2*1.0
     #feature 5_2 done
 
     #UNIT5_3 conv
@@ -301,11 +301,11 @@ def get_resnet_test(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHO
 
     # bn_roi_pool4 = mx.sym.BatchNorm(data=roi_pool4, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn_roi_pool4')
     relu_pool5_3 = mx.sym.Activation(data=unit, act_type='relu', name='relu_pool_53')
-    pool5_3 = mx.symbol.Pooling(data=relu_pool5_3, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool5_4')
-    pool5_3_norm = mx.symbol.L2Normalization(pool5_3, mode='instance', name = 'pool5_3_norm')
+    pool5_3_norm = mx.symbol.L2Normalization(relu_pool5_3, mode='spatial', name = 'pool5_3_norm')
+    pool5_3 = mx.symbol.Pooling(data=pool5_3_norm, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool5_4')
     #scale_5_1 =mx.symbol.Variable('scale_5_1', shape=(1,)) 
     #pool_5_1_scale = mx.symbol.broadcast_mul(lhs = pool5_1_norm, rhs = scale_5_1, name = 'pool_5_1_scale')
-    pool_5_3_scale = pool5_3_norm*1.0
+    pool_5_3_scale = pool5_3*1.0
     #feature 5_3 done
 
     #UNIT5_4 conv
