@@ -142,16 +142,16 @@ def get_resnet_train(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     # Fast R-CNN
     
     ##feature 4
-    roi_pool4 = mx.symbol.ROIPooling(
-        name='roi_pool4', data=unit_4_1, rois=rois, pooled_size=(14, 14), spatial_scale=1.0 / config.RCNN_FEAT_STRIDE)
+    #roi_pool4 = mx.symbol.ROIPooling(
+    #    name='roi_pool4', data=unit_4_1, rois=rois, pooled_size=(14, 14), spatial_scale=1.0 / config.RCNN_FEAT_STRIDE)
 
     ## bn_roi_pool4 = mx.sym.BatchNorm(data=roi_pool4, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn_roi_pool4')
-    relu_pool4 = mx.sym.Activation(data=roi_pool4, act_type='relu', name='relu_pool4')
-    pool4_1 = mx.symbol.Pooling(data=relu_pool4, global_pool=True, kernel=(14, 14), pool_type='avg', name='pool4_1')
-    pool4_1_norm = mx.symbol.L2Normalization(pool4_1, mode='instance', name = 'pool4_1_norm')
+    #relu_pool4 = mx.sym.Activation(data=roi_pool4, act_type='relu', name='relu_pool4')
+    #pool4_1 = mx.symbol.Pooling(data=relu_pool4, global_pool=True, kernel=(14, 14), pool_type='avg', name='pool4_1')
+    #pool4_1_norm = mx.symbol.L2Normalization(pool4_1, mode='instance', name = 'pool4_1_norm')
     #scale_4_1 =mx.symbol.Variable('scale_4_1', shape=(1,)) 
     #pool_4_1_scale = mx.symbol.broadcast_mul(lhs = pool4_1_norm, rhs = scale_4_1, name = 'pool_4_1_scale')
-    pool_4_1_scale = pool4_1_norm*1.0
+    #pool_4_1_scale = pool4_1_norm*1.0
     #feature 4 done
 
 
@@ -195,7 +195,7 @@ def get_resnet_train(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     pool1 = mx.symbol.Pooling(data=relu1, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool1')
     #feature 5 done
 
-    pool_concat = mx.symbol.Concat(pool_4_1_scale, pool_5_1_scale, pool_5_2_scale, pool1, dim = 1, name = 'pool1_concat')
+    pool_concat = mx.symbol.Concat(pool_5_1_scale, pool_5_2_scale, pool1, dim = 1, name = 'pool1_concat')
 
     # classification
     cls_score = mx.symbol.FullyConnected(name='cls_score', data=pool_concat, num_hidden=num_classes)
@@ -252,14 +252,14 @@ def get_resnet_test(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHO
             threshold=config.TEST.RPN_NMS_THRESH, rpn_min_size=config.TEST.RPN_MIN_SIZE)
 
     ##feature 4
-    roi_pool4 = mx.symbol.ROIPooling(
-        name='roi_pool4', data=unit_4_1, rois=rois, pooled_size=(14, 14), spatial_scale=1.0 / config.RCNN_FEAT_STRIDE)
+    #roi_pool4 = mx.symbol.ROIPooling(
+    #    name='roi_pool4', data=unit_4_1, rois=rois, pooled_size=(14, 14), spatial_scale=1.0 / config.RCNN_FEAT_STRIDE)
 
     ## bn_roi_pool4 = mx.sym.BatchNorm(data=roi_pool4, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn_roi_pool4')
-    relu_pool4 = mx.sym.Activation(data=roi_pool4, act_type='relu', name='relu_pool4')
-    pool4_1 = mx.symbol.Pooling(data=relu_pool4, global_pool=True, kernel=(14, 14), pool_type='avg', name='pool4_1')
-    pool4_1_norm = mx.symbol.L2Normalization(pool4_1, mode='instance', name = 'pool4_1_norm')
-    pool_4_1_scale = pool4_1_norm*1.0
+    #relu_pool4 = mx.sym.Activation(data=roi_pool4, act_type='relu', name='relu_pool4')
+    #pool4_1 = mx.symbol.Pooling(data=relu_pool4, global_pool=True, kernel=(14, 14), pool_type='avg', name='pool4_1')
+    #pool4_1_norm = mx.symbol.L2Normalization(pool4_1, mode='instance', name = 'pool4_1_norm')
+    #pool_4_1_scale = pool4_1_norm*1.0
     ## make a scale
     #scale_4_1 =mx.symbol.Variable('scale_4_1', shape=(1,)) 
     #pool_4_1_scale = mx.symbol.broadcast_mul(lhs = pool4_1_norm, rhs = scale_4_1, name = 'pool_4_1_scale')
@@ -307,7 +307,7 @@ def get_resnet_test(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHO
     relu1 = mx.sym.Activation(data=bn1, act_type='relu', name='relu1')
     pool1 = mx.symbol.Pooling(data=relu1, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool1')
 
-    pool_concat = mx.symbol.Concat(pool_4_1_scale ,pool_5_1_scale, pool_5_2_scale, pool1, dim = 1, name = 'pool1_concat')
+    pool_concat = mx.symbol.Concat(pool_5_1_scale, pool_5_2_scale, pool1, dim = 1, name = 'pool1_concat')
 
     # classification
     cls_score = mx.symbol.FullyConnected(name='cls_score', data=pool_concat, num_hidden=num_classes)
