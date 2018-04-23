@@ -31,7 +31,7 @@ def get_rcnn_names():
     #pred = ['rcnn_cls_prob', 'rcnn_bbox_loss']
 
     #CCNET
-    pred = ['rcnn_cls_prob1', 'rcnn_cls_prob2', 'rcnn_cls_prob3', 'rcnn_cls_prob4', 'rcnn_cls_prob', 'rcnn_bbox_loss']
+    pred = ['rcnn_cls_prob1', 'rcnn_cls_prob2', 'rcnn_cls_prob3', 'rcnn_cls_prob', 'rcnn_bbox_loss']
 
     label = ['rcnn_label', 'rcnn_bbox_target', 'rcnn_bbox_weight']
     if config.TRAIN.END2END:
@@ -161,29 +161,6 @@ class RCNN3AccMetric(mx.metric.EvalMetric):
         self.sum_metric += (np.sum(pred_label.flat == label.flat))*weight
         self.num_inst += len(pred_label.flat)
 
-#RCNN4 Accaracy
-class RCNN4AccMetric(mx.metric.EvalMetric):
-    def __init__(self):
-        super(RCNN4AccMetric, self).__init__('RCNNAcc4')
-        self.e2e = config.TRAIN.END2END
-        self.pred, self.label = get_rcnn_names()
-
-    def update(self, labels, preds):
-        pred = preds[self.pred.index('rcnn_cls_prob4')]
-        if self.e2e:
-            label = preds[self.pred.index('rcnn_label')]
-        else:
-            label = labels[self.label.index('rcnn_label')]
-
-        last_dim = pred.shape[-1]
-        pred_label = pred.asnumpy().reshape(-1, last_dim).argmax(axis=1).astype('int32')
-        label = label.asnumpy().reshape(-1,).astype('int32')
-
-        #weight
-        weight = config.CCNET.loss_weight4
-
-        self.sum_metric += (np.sum(pred_label.flat == label.flat))*weight
-        self.num_inst += len(pred_label.flat)
 #-----------------------Accuracy Done--------------------#
 
 
@@ -324,35 +301,6 @@ class RCNN3LogLossMetric(mx.metric.EvalMetric):
         #weight
         weight = config.CCNET.loss_weight3
 
-        self.sum_metric += cls_loss * weight
-        self.num_inst += label.shape[0]
-
-
-#RCNN4 Log Loss
-class RCNN4LogLossMetric(mx.metric.EvalMetric):
-    def __init__(self):
-        super(RCNN4LogLossMetric, self).__init__('RCNNLogLoss4')
-        self.e2e = config.TRAIN.END2END
-        self.pred, self.label = get_rcnn_names()
-
-    def update(self, labels, preds):
-        pred = preds[self.pred.index('rcnn_cls_prob4')]
-        if self.e2e:
-            label = preds[self.pred.index('rcnn_label')]
-        else:
-            label = labels[self.label.index('rcnn_label')]
-
-        last_dim = pred.shape[-1]
-        pred = pred.asnumpy().reshape(-1, last_dim)
-        label = label.asnumpy().reshape(-1,).astype('int32')
-        cls = pred[np.arange(label.shape[0]), label]
-
-        cls += 1e-14
-        cls_loss = -1 * np.log(cls)
-        cls_loss = np.sum(cls_loss)
-
-        #weight
-        weight = config.CCNET.loss_weight4
         self.sum_metric += cls_loss * weight
         self.num_inst += label.shape[0]
 

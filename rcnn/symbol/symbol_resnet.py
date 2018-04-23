@@ -26,7 +26,7 @@ workspace = 512
 res_deps = {'50': (3, 4, 6, 3), '101': (3, 4, 23, 3), '152': (3, 8, 36, 3), '200': (3, 24, 36, 3)}
 units = res_deps['101']
 filter_list = [256, 512, 1024, 2048]
-
+score_scale = config.CCNET.score_scale
 
 def residual_unit(data, num_filter, stride, dim_match, name):
     bn1 = mx.sym.BatchNorm(data=data, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name=name + '_bn1')
@@ -163,6 +163,7 @@ def get_resnet_train(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     pool_5_2_scale = pool5_2*1.0
     pool_5_2_concat = mx.symbol.Concat(pool_5_2_scale, pool_5_1_scale, dim = 1, name = 'pool_5_2_concat')
     cls_score2 = mx.symbol.FullyConnected(name='cls_score2', data=pool_5_2_concat, num_hidden=num_classes)
+    cls_score2 = cls_score2 + cls_score1*score_scale
     cls_prob2 = mx.symbol.SoftmaxOutput(name='cls_prob2', data=cls_score2, label=label, normalization='batch')
     #feature 5_2 done
 
@@ -176,6 +177,7 @@ def get_resnet_train(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     pool_5_3_scale = pool5_3*1.0
     pool_5_3_concat = mx.symbol.Concat(pool_5_3_scale, pool_5_2_concat, dim = 1, name = 'pool_5_3_concat')
     cls_score3 = mx.symbol.FullyConnected(name='cls_score3', data=pool_5_3_concat, num_hidden=num_classes)
+    cls_score3 = cls_score3 + cls_score2*score_scale
     cls_prob3 = mx.symbol.SoftmaxOutput(name='cls_prob3', data=cls_score3, label=label, normalization='batch')
     #feature 5_3 done
 
@@ -192,14 +194,11 @@ def get_resnet_train(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     bn1 = mx.sym.BatchNorm(data=unit, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn1')
     relu1 = mx.sym.Activation(data=bn1, act_type='relu', name='relu1')
     pool1 = mx.symbol.Pooling(data=relu1, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool1')
-
-    #feature chaining
     pool_concat = mx.symbol.Concat(pool1, pool_5_3_concat, dim = 1, name = 'pool1_concat')
-    cls_score4 = mx.symbol.FullyConnected(name='cls_score4', data=pool_concat, num_hidden=num_classes)
-    cls_prob4 = mx.symbol.SoftmaxOutput(name='cls_prob4', data=cls_score4, label=label, normalization='batch')
 
-    # classification
-    cls_score = cls_score4*config.CCNET.score_scale4 + cls_score3*config.CCNET.score_scale3 + cls_score2*config.CCNET.score_scale2 + cls_score1*config.CCNET.score_scale1
+    # classfication
+    cls_score = mx.symbol.FullyConnected(name='cls_score', data=pool_concat, num_hidden=num_classes)
+    cls_score = cls_score + cls_score3*score_scale
     cls_prob = mx.symbol.SoftmaxOutput(name='cls_prob', data=cls_score, label=label, normalization='batch')
 
     # bounding box regression
@@ -215,13 +214,12 @@ def get_resnet_train(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCH
     cls_prob1 = mx.symbol.Reshape(data=cls_prob1, shape=(config.TRAIN.BATCH_IMAGES, -1, num_classes), name='cls_prob_reshape1')
     cls_prob2 = mx.symbol.Reshape(data=cls_prob2, shape=(config.TRAIN.BATCH_IMAGES, -1, num_classes), name='cls_prob_reshape2')
     cls_prob3 = mx.symbol.Reshape(data=cls_prob3, shape=(config.TRAIN.BATCH_IMAGES, -1, num_classes), name='cls_prob_reshape3')
-    cls_prob4 = mx.symbol.Reshape(data=cls_prob4, shape=(config.TRAIN.BATCH_IMAGES, -1, num_classes), name='cls_prob_reshape4')
     #new classifier done
 
     bbox_loss = mx.symbol.Reshape(data=bbox_loss, shape=(config.TRAIN.BATCH_IMAGES, -1, 4 * num_classes), name='bbox_loss_reshape')
 
     # group = mx.symbol.Group([rpn_cls_prob, rpn_bbox_loss, cls_prob, bbox_loss, mx.symbol.BlockGrad(label)])
-    group = mx.symbol.Group([rpn_cls_prob, rpn_bbox_loss, cls_prob1, cls_prob2, cls_prob3, cls_prob4, cls_prob, bbox_loss, mx.symbol.BlockGrad(label)])
+    group = mx.symbol.Group([rpn_cls_prob, rpn_bbox_loss, cls_prob1, cls_prob2, cls_prob3, cls_prob, bbox_loss, mx.symbol.BlockGrad(label)])
     return group
 
 
@@ -287,6 +285,7 @@ def get_resnet_test(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHO
     pool_5_2_scale = pool5_2*1.0
     pool_5_2_concat = mx.symbol.Concat(pool_5_2_scale, pool_5_1_scale, dim = 1, name = 'pool_5_2_concat')
     cls_score2 = mx.symbol.FullyConnected(name='cls_score2', data=pool_5_2_concat, num_hidden=num_classes)
+    cls_score2 = cls_score2 + cls_score1*score_scale
     #feature 5_2 done
 
     #UNIT5_3 conv
@@ -298,7 +297,8 @@ def get_resnet_test(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHO
     pool5_3 = mx.symbol.Pooling(data=relu_pool5_3, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool5_3')
     pool_5_3_scale = pool5_3*1.0
     pool_5_3_concat = mx.symbol.Concat(pool_5_3_scale, pool_5_2_concat, dim = 1, name = 'pool_5_3_concat')
-    cls_score3 = mx.symbol.FullyConnected(name='cls_score3', data=pool_5_3_concat, num_hidden=num_classes)    
+    cls_score3 = mx.symbol.FullyConnected(name='cls_score3', data=pool_5_3_concat, num_hidden=num_classes)
+    cls_score3 = cls_score3 + cls_score2*score_scale    
     #feature 5_3 done
 
     #UNIT5_4 conv
@@ -314,13 +314,13 @@ def get_resnet_test(num_classes=config.NUM_CLASSES, num_anchors=config.NUM_ANCHO
     bn1 = mx.sym.BatchNorm(data=unit, fix_gamma=False, eps=eps, use_global_stats=use_global_stats, name='bn1')
     relu1 = mx.sym.Activation(data=bn1, act_type='relu', name='relu1')
     pool1 = mx.symbol.Pooling(data=relu1, global_pool=True, kernel=(7, 7), pool_type='avg', name='pool1')
-
     pool_concat = mx.symbol.Concat(pool1, pool_5_3_concat, dim = 1, name = 'pool1_concat')
-    cls_score4 = mx.symbol.FullyConnected(name='cls_score4', data=pool_concat, num_hidden=num_classes)
 
     # classification
-    cls_score = cls_score4*config.CCNET.score_scale4 + cls_score3*config.CCNET.score_scale3 + cls_score2*config.CCNET.score_scale2 + cls_score1*config.CCNET.score_scale1
+    cls_score = mx.symbol.FullyConnected(name='cls_score', data=pool_concat, num_hidden=num_classes)
+    cls_score = cls_score + cls_score3*score_scale
     cls_prob = mx.symbol.softmax(name='cls_prob', data=cls_score)
+
     # bounding box regression
     bbox_pred = mx.symbol.FullyConnected(name='bbox_pred', data=pool_concat, num_hidden=num_classes * 4)
 

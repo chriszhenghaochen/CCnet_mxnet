@@ -88,8 +88,8 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
         arg_params['rpn_cls_score_bias'] = mx.nd.zeros(shape=arg_shape_dict['rpn_cls_score_bias'])
         arg_params['rpn_bbox_pred_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['rpn_bbox_pred_weight'])
         arg_params['rpn_bbox_pred_bias'] = mx.nd.zeros(shape=arg_shape_dict['rpn_bbox_pred_bias'])
-        # arg_params['cls_score_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['cls_score_weight'])
-        # arg_params['cls_score_bias'] = mx.nd.zeros(shape=arg_shape_dict['cls_score_bias'])
+        arg_params['cls_score_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['cls_score_weight'])
+        arg_params['cls_score_bias'] = mx.nd.zeros(shape=arg_shape_dict['cls_score_bias'])
         arg_params['bbox_pred_weight'] = mx.random.normal(0, 0.001, shape=arg_shape_dict['bbox_pred_weight'])
         arg_params['bbox_pred_bias'] = mx.nd.zeros(shape=arg_shape_dict['bbox_pred_bias'])
 
@@ -107,8 +107,6 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
             arg_params['cls_score2_bias'] = mx.nd.zeros(shape=arg_shape_dict['cls_score2_bias'])
             arg_params['cls_score3_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['cls_score3_weight'])
             arg_params['cls_score3_bias'] = mx.nd.zeros(shape=arg_shape_dict['cls_score3_bias'])
-            arg_params['cls_score4_weight'] = mx.random.normal(0, 0.01, shape=arg_shape_dict['cls_score4_weight'])
-            arg_params['cls_score4_bias'] = mx.nd.zeros(shape=arg_shape_dict['cls_score4_bias'])
             aux_params['bn_roi_pool5_1_moving_mean'] = mx.nd.zeros(shape=aux_shape_dict['bn_roi_pool5_1_moving_mean'])
             aux_params['bn_roi_pool5_1_moving_var'] = mx.nd.ones(shape=aux_shape_dict['bn_roi_pool5_1_moving_var'])
             aux_params['bn_roi_pool5_2_moving_mean'] = mx.nd.zeros(shape=aux_shape_dict['bn_roi_pool5_2_moving_mean'])
@@ -153,8 +151,6 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     cls_metric2 = metric.RCNN2LogLossMetric()
     eval_metric3 = metric.RCNN3AccMetric()
     cls_metric3 = metric.RCNN3LogLossMetric()
-    eval_metric4 = metric.RCNN4AccMetric()
-    cls_metric4 = metric.RCNN4LogLossMetric()
     #CCNET LOSS done
 
     bbox_metric = metric.RCNNL1LossMetric()
@@ -164,7 +160,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     # for child_metric in [rpn_eval_metric, rpn_cls_metric, rpn_bbox_metric, eval_metric, cls_metric, bbox_metric]:
 
     # #CCNET
-    for child_metric in [rpn_eval_metric, rpn_cls_metric, rpn_bbox_metric, eval_metric1, cls_metric1, eval_metric2, cls_metric2, eval_metric3, cls_metric3, eval_metric4, cls_metric4, eval_metric, cls_metric, bbox_metric]:
+    for child_metric in [rpn_eval_metric, rpn_cls_metric, rpn_bbox_metric, eval_metric1, cls_metric1, eval_metric2, cls_metric2, eval_metric3, cls_metric3, eval_metric, cls_metric, bbox_metric]:
         eval_metrics.add(child_metric)
 
     # callback

@@ -111,16 +111,12 @@ config.TEST.NMS = 0.3
 config.CCNET = edict()
 
 #loss weight
-config.CCNET.loss_weight1 = 0.075
-config.CCNET.loss_weight2 = 0.125
-config.CCNET.loss_weight3 = 0.25
-config.CCNET.loss_weight4 = 0.5
+config.CCNET.loss_weight1 = 0.125
+config.CCNET.loss_weight2 = 0.25
+config.CCNET.loss_weight3 = 0.5
 
 #score scale
-config.CCNET.score_scale1 = 0.1
-config.CCNET.score_scale2 = 0.15
-config.CCNET.score_scale3 = 0.25
-config.CCNET.score_scale4 = 0.5
+config.CCNET.score_scale = 0.5
 
 
 # default settings
