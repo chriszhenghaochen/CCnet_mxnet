@@ -145,10 +145,28 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch,
     rpn_bbox_metric = metric.RPNL1LossMetric()
     eval_metric = metric.RCNNAccMetric()
     cls_metric = metric.RCNNLogLossMetric()
+
+    #CCNET LOSS
+    eval_metric1 = metric.RCNN1AccMetric()
+    cls_metric1 = metric.RCNN1LogLossMetric()
+    eval_metric2 = metric.RCNN2AccMetric()
+    cls_metric2 = metric.RCNN2LogLossMetric()
+    eval_metric3 = metric.RCNN3AccMetric()
+    cls_metric3 = metric.RCNN3LogLossMetric()
+    eval_metric4 = metric.RCNN4AccMetric()
+    cls_metric4 = metric.RCNN4LogLossMetric()
+    #CCNET LOSS done
+
     bbox_metric = metric.RCNNL1LossMetric()
     eval_metrics = mx.metric.CompositeEvalMetric()
-    for child_metric in [rpn_eval_metric, rpn_cls_metric, rpn_bbox_metric, eval_metric, cls_metric, bbox_metric]:
+
+    # #FRCN
+    # for child_metric in [rpn_eval_metric, rpn_cls_metric, rpn_bbox_metric, eval_metric, cls_metric, bbox_metric]:
+
+    # #CCNET
+    for child_metric in [rpn_eval_metric, rpn_cls_metric, rpn_bbox_metric, eval_metric1, cls_metric1, eval_metric2, cls_metric2, eval_metric3, cls_metric3, eval_metric4, cls_metric4, eval_metric, cls_metric, bbox_metric]:
         eval_metrics.add(child_metric)
+
     # callback
     batch_end_callback = mx.callback.Speedometer(train_data.batch_size, frequent=args.frequent, auto_reset=False)
     means = np.tile(np.array(config.TRAIN.BBOX_MEANS), config.NUM_CLASSES)
